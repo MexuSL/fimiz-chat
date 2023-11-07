@@ -97,8 +97,8 @@ socketIO.on("connection", async (socket) => {
     /////////////////// JOIN A ROOM //////////////////////
 
     socket.on("joinRoom", (data: any) => {
-        socket.join(data.room);
-        console.log(`User with Id ${data.userId} joins room ${data.room}`);
+        socket.join(data.roomId);
+        console.log(`User with Id ${data.userId} joins room ${data.roomId}`);
     });
 
     //// chat between users ////////////////////////////////////
@@ -114,11 +114,11 @@ socketIO.on("connection", async (socket) => {
         otherFile:string
     }
 
-    socket.on(String(roomId), async (msgData:MessagePayload) => {
+    socket.on("msg", async (msgData:MessagePayload) => {
         try {
             // console.log("From user 2");
             console.log(msgData);
-            // Save the chat message to the database
+            // Save the chat message to the databases
             const message = await Message.create({
                 senderId: msgData?.senderId,
                 recipientId: msgData?.recipientId,
@@ -196,6 +196,7 @@ socketIO.on("connection", async (socket) => {
 
             let newChat = await chat?.save();
             const recipient = await User.findByPk(msgData.recipientId);
+            const sender = await User.findByPk(msgData.senderId);
 
             if (message && recipient) {
                 const chatMessage: ChatReturnType = {
@@ -214,9 +215,10 @@ socketIO.on("connection", async (socket) => {
                         avatar: recipient?.getDataValue("profileImage"),
                     },
                 };
-                socketIO.to(roomId).emit(String(roomId), chatMessage);
+                socketIO.to(msgData?.roomId).emit("msg", chatMessage);
+                console.log("Message sent to room", msgData?.roomId)
                 console.log({ UpdatedConv: chat?.dataValues });
-                socket.to(String(roomId)).emit("conversation", newChat);
+                socketIO.to(String(msgData.roomId)).emit("conversation", newChat);
                 
                 let {data,status} = await axios.get(`http://192.168.1.98:5000/notifications/token/${msgData.recipientId}`)
                 if(status === 200){
@@ -224,8 +226,8 @@ socketIO.on("connection", async (socket) => {
                     let notificationMsgs:NotificationData[] = []
                     for(let notificationToken of notificationTokens){
                         let notificationMsg:NotificationData = {
-                            body:chatMessage.text,
-                            title:'',
+                            body:"New message",
+                            title:sender?.getFullname()||"Message",
                             token:notificationToken,
                             data:{
                                 url:`com.commodity.sl:/chat`}}
@@ -233,7 +235,7 @@ socketIO.on("connection", async (socket) => {
                     }
     
                     notification.sendNotification(notificationMsgs).then(()=>{
-                        console.log("Notifaction Sent")
+                        console.log("Notifacation Sent")
                     }).catch((err)=>{
                         console.log(err)
                     })
@@ -297,9 +299,9 @@ socketIO.on("connection", async (socket) => {
             //         .to(roomId)
             //         .emit("typing", updatedStatus.dataValues);
             // }
-
+            console.log("Typing from ",data)
             socket.broadcast
-            .to(roomId)
+            .to(data?.roomId)
             .emit("typing",data);
         } catch (err) {
             console.log(err);
@@ -310,7 +312,7 @@ socketIO.on("connection", async (socket) => {
 
     socket.on("recording", async (data: any) => {
         try {
-            socket.broadcast.to(roomId).emit("recording", data);
+            socket.broadcast.to(data?.roomId).emit("recording", data);
         } catch (err) {
             console.log(err);
         }
@@ -322,6 +324,7 @@ socketIO.on("connection", async (socket) => {
         try {
             console.log("ACTIVE ROOM", data);
             roomId = data.roomId
+            socket.join(roomId)
             console.log(`User with Id ${data.userId} joins room ${data.roomId}`);
             let status = await Status.findOne({
                 where: { userId: data.userId },

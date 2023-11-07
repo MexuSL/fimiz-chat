@@ -19,7 +19,7 @@ module.exports = {
               allowNull: false,
           },
           text: {
-              type: Sequelize.TEXT,
+              type: Sequelize.TEXT(60000),
           },
           image: {
               type: Sequelize.STRING,

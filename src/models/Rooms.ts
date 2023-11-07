@@ -2,14 +2,7 @@ import { Model, DataTypes } from "sequelize";
 import sequelize from "../database/connection";
 
 class Room extends Model {
-    public id!: number;
-    public senderId!: number;
-    public recipientId!: number;
-    public lastText?: string;
-    public recipientReadStatus?: boolean;
-    public numberOfUnreadText?: number;
-    public createdAt!: Date;
-    public updatedAt!: Date;
+
 }
 
 Room.init(
@@ -29,7 +22,7 @@ Room.init(
             allowNull: false,
         },
         lastText: {
-            type: DataTypes.STRING,
+            type: DataTypes.TEXT,
         },
         recipientReadStatus: {
             type: DataTypes.BOOLEAN,

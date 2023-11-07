@@ -20,6 +20,9 @@ module.exports = {
             profileImage: {
                 type: Sequelize.STRING,
             },
+            bio: {
+                type: Sequelize.TEXT,
+            },
             password: {
                 type: Sequelize.STRING,
             },

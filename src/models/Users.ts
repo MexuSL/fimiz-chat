@@ -33,6 +33,9 @@ User.init(
         profileImage: {
             type: DataTypes.STRING,
         },
+        bio: {
+            type: DataTypes.TEXT,
+        },
         password: {
             type: DataTypes.STRING,
         },

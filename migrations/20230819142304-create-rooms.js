@@ -19,7 +19,7 @@ module.exports = {
               allowNull: false,
           },
           lastText: {
-              type: Sequelize.STRING,
+              type: Sequelize.TEXT,
           },
           recipientReadStatus: {
               type: Sequelize.BOOLEAN,
