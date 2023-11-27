@@ -1,43 +1,45 @@
 services:
-    chat1:
-        container_name: chat_container_1
-        build: .
+    fimiz_chat_api_server_1:
+        container_name: fimiz_chat_api_server_container_1
+        image: fimiz/chat:latest
         ports:
-            - 8000:8080
+            - 1111:8080
         environment:
             - PORT=8080
-            - DB_PASSWORD=
-            - DB_USERNAME=root
-            - DB_HOST=localhost
-            - DB_NAME=db
-    chat2:
-        container_name: chat_container_2
-        build: .
+            - PG_DB_PASSWORD=${PG_DB_PASSWORD}
+            - PG_DB_USERNAME=${PG_DB_USERNAME}
+            - PG_DB_HOST=${PG_DB_HOST}
+            - PG_DB_NAME=${PG_DB_NAME}
+    fimiz_chat_api_server_2:
+        container_name: fimiz_chat_api_server_container_2
+        image: fimiz/chat:latest
         ports:
-            - 8001:8080
+            - 2222:8080
         environment:
-            - PORT=8080
-            - DB_PASSWORD=
-            - DB_USERNAME=root
-            - DB_HOST=localhost
-            - DB_NAME=db
-    chat3:
-        container_name: chat_container_3
-        build: .
+              - PORT=8080
+              - PG_DB_PASSWORD=${PG_DB_PASSWORD}
+              - PG_DB_USERNAME=${PG_DB_USERNAME}
+              - PG_DB_HOST=${PG_DB_HOST}
+              - PG_DB_NAME=${PG_DB_NAME}
+    fimiz_chat_api_server_3:
+        container_name: fimiz_chat_api_server_container_3
+        image: fimiz/chat:latest
         ports:
-            - 8002:8080
+            - 3333:8080
         environment:
-            - PORT=8080
-            - DB_PASSWORD=
-            - DB_USERNAME=root
-            - DB_HOST=localhost
-            - DB_NAME=db
+              - PORT=8080
+              - PG_DB_PASSWORD=${PG_DB_PASSWORD}
+              - PG_DB_USERNAME=${PG_DB_USERNAME}
+              - PG_DB_HOST=${PG_DB_HOST}
+              - PG_DB_NAME=${PG_DB_NAME}
     nginx:
         container_name: nginx_container
-        image: custom-nginx
+        build:
+            context: ./nginx/
+            dockerfile: Dockerfile
         ports:
-            - 8080:80
+            - 80:80
         depends_on:
-            - chat1
-            - chat2
-            - chat3
+            - fimiz_chat_api_server_1
+            - fimiz_chat_api_server_2
+            - fimiz_chat_api_server_3
