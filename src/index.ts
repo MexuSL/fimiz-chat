@@ -4,10 +4,16 @@ import http from "http";
 import dotenv from "dotenv";
 import Room from "./models/Rooms";
 import User from "../src/models/Users";
-import { ChatReturnType } from "../src/types/types";
+import {
+    ChatReturnType,
+    IMessage,
+    OnlineType,
+    RecordingType,
+    TypingType,
+} from "../src/types/types";
 import { Server } from "socket.io";
-import router from "./controllers/ChatController";
-import proxyRouter from './controllers/ProxyController'
+// import router from "./controllers/ChatController";
+import proxyRouter from "./controllers/ProxyController";
 import Status from "./models/Status";
 import Message from "./models/Messages";
 import { Op } from "sequelize";
@@ -25,17 +31,16 @@ type NotificationData = {
     };
 };
 
-const notification = new NotificationService()
+const notification = new NotificationService();
 
 dotenv.config();
 // Create an Express app and HTTP server
 const app = express();
 app.use(express.json());
 app.use(cors());
-app.use(authorizeApiAccess)
-app.use(router);
-app.use(proxyRouter)
-
+app.use(authorizeApiAccess);
+// app.use(router);
+app.use(proxyRouter);
 
 const server = http.createServer(app);
 
@@ -56,19 +61,16 @@ app.get("/", (req, res) => {
 
 // socketIO.send("Hello client")
 
-
-
 socketIO.on("connection", async (socket) => {
-    let roomId = socket.handshake.query.roomId || "" satisfies string;
+    let roomId = socket.handshake.query.roomId || ("" satisfies string);
     let userId = socket.handshake.query.userId;
     let roomType = socket.handshake.query.roomType || "";
-    console.log({ roomId,roomType,userId });
+    console.log({ roomId, roomType, userId });
 
     if (roomId) {
         /// connect or join a room if users click on the chat button on the frontend///////////////
         socket.join(String(roomId));
         console.log(`User with Id ${userId} is joins room ${roomId}`);
-
     }
 
     if (userId) {
@@ -81,14 +83,16 @@ socketIO.on("connection", async (socket) => {
                     online: true,
                     userId,
                 });
-                socket.emit(String(userId), createdStatus.dataValues);
+                socket.emit(String(userId), JSON.stringify({...createdStatus.dataValues,online:"true"}));
+                console.log({"Start":createdStatus.dataValues})
             } else {
                 let updatedStatus = await status.update({
                     online: true,
                 });
-                socket.emit(String(userId), updatedStatus.dataValues);
+                console.log({"Start":updatedStatus.dataValues})
+                socket.emit(String(userId), JSON.stringify({...updatedStatus.dataValues,online:"true"}));
             }
-            console.log(`User with Id ${userId} is online`);
+            console.log(`Starting User with Id ${userId} is online`);
         } catch (err) {
             console.log(err);
         }
@@ -104,147 +108,194 @@ socketIO.on("connection", async (socket) => {
     //// chat between users ////////////////////////////////////
 
     type MessagePayload = {
-        senderId:string
-        recipientId:string
-        image?:string
-        audio?:string
-        video?:string
-        text?:string
-        roomId:string
-        otherFile:string
-    }
+        messageId: string;
+        senderId: string;
+        recipientId: string;
+        image?: string;
+        audio?: string;
+        video?: string;
+        text?: string;
+        roomId: string;
+        otherFile: string;
+        received?: boolean;
+        sent?: boolean;
+        pending?: boolean;
+    };
 
-    socket.on("msg", async (msgData:MessagePayload) => {
+    socket.on("msg", async (msgData: MessagePayload) => {
         try {
             // console.log("From user 2");
             console.log(msgData);
+            msgData.received = false;
+            msgData.pending = false;
+            msgData.sent = true;
             // Save the chat message to the databases
-            const message = await Message.create({
-                senderId: msgData?.senderId,
-                recipientId: msgData?.recipientId,
-                text: msgData?.text,
-                image: msgData?.image,
-                audio: msgData?.audio,
-                video: msgData?.video,
-                otherFile: msgData?.otherFile,
-                roomId: msgData?.roomId || roomId,
-                sent: true,
-                received: false,  
-                pending: true,
-            });
 
             let chat = await Room.findOne({
-                where: {roomId:msgData?.roomId || roomId},
+                where: { roomId: msgData?.roomId || roomId },
             });
             if (chat) {
                 let initialSenderId = chat.getDataValue("senderId");
                 let initialrecipientId = chat.getDataValue("recipientId");
-                let currentSenderStatus = await Status.findOne({
-                    where: { userId: initialSenderId },
-                });
-                let currentrecipientStatus = await Status.findOne({
+                // let currentSenderStatus = await Status.findOne({
+                //     where: { userId: initialSenderId },
+                // });
+                let recipientStatus = await Status.findOne({
                     where: { userId: initialrecipientId },
                 });
-                // check if the receiver have not opened the chat screen or is not on the chat screen
-
-                await chat.update({"recipientReadStatus":false});
 
                 let unReadTextNo = chat.getDataValue("numberOfUnreadText");
-                if (initialSenderId === msgData.senderId) {
-                    console.log("From the same sender");
+                let recipientActiveRoom =
+                    recipientStatus?.getDataValue("activeRoom");
+                let recipientOnlineStatus =
+                    recipientStatus?.getDataValue("online");
+                // check if the receiver have not opened the chat screen or is not on the chat screen
 
-                    console.log("No of unread", unReadTextNo);
-                    if (
-                        currentrecipientStatus?.getDataValue("activeRoom") !==
-                        roomId
-                    ) {
-                        if (unReadTextNo) {
-                            chat = await chat.increment("numberOfUnreadText", {
-                                by: 1,
-                            });
-                        } else {
-                            await chat.update({"numberOfUnreadText": 1});
-                        }
-                        await chat.update({"recipientReadStatus":false});
-                    } else {
-                        await chat.update({"numberOfUnreadText":null,"recipientReadStatus":null});
+                if (recipientActiveRoom === roomId) {
+                    if (recipientOnlineStatus === true) {
+                        msgData.received = true;
                     }
                 } else {
-                    if (
-                        currentSenderStatus?.getDataValue("activeRoom") !==
-                        roomId
-                    ) {
-                        if (unReadTextNo) {
-                            chat = await chat.increment("numberOfUnreadText", {
-                                by: 1,
-                            });
-                        } else {
-                            await chat.update({"numberOfUnreadText":1});
-                        }
-                    } else {
-                        await chat.update({"numberOfUnreadText":null,"recipientReadStatus":null});
+                    if (recipientOnlineStatus === true) {
+                        msgData.pending = true;
                     }
-
-                    await chat.update({"senderId":msgData.senderId,"recipientId":initialSenderId});
-                    // chat.setDataValue("recipientId", initialSenderId);
                 }
+                if (msgData.text !== "") {
+                    chat.setDataValue("lastText", msgData.text);
+                } else if (msgData.audio !== "") {
+                    chat.setDataValue("lastText", "🎙");
+                } else if (msgData.video !== "") {
+                    chat.setDataValue("lastText", "📹");
+                } else {
+                    chat.setDataValue("lastText", "📁");
+                }
+                // await chat.update({"recipientReadStatus":false});
+                const message = await Message.create({
+                    senderId: msgData?.senderId,
+                    recipientId: msgData?.recipientId,
+                    text: msgData?.text,
+                    image: msgData?.image,
+                    audio: msgData?.audio,
+                    video: msgData?.video,
+                    otherFile: msgData?.otherFile,
+                    roomId: msgData?.roomId || roomId,
+                    sent: msgData.sent,
+                    received: msgData.received,
+                    pending: msgData.pending,
+                });
+                if (initialSenderId !== msgData.senderId && chat.getDataValue("lastText") !== null) {
+                    await chat.update({
+                        numberOfUnreadText: 0,
+                        recipientReadStatus: true,
+                    });
+                }
+                if (recipientActiveRoom === msgData.roomId) {
+                    await chat.update({
+                        numberOfUnreadText: 0,
+                        recipientReadStatus: true,
+                    });
+                } else {
+                    await chat.update({
+                        numberOfUnreadText: Number(unReadTextNo) + 1,
+                        recipientReadStatus: false,
+                    });
+                }
+                // console.log("From the same sender");
+                // console.log("No of unread", unReadTextNo);
+                // if (
+                //     currentrecipientStatus?.getDataValue("activeRoom") !==
+                //     roomId
+                // ) {
+                //     if (unReadTextNo) {
+                //         chat = await chat.increment("numberOfUnreadText", {
+                //             by: 1,
+                //         });
+                //     } else {
+                //         await chat.update({"numberOfUnreadText": 1});
+                //     }
+                //     await chat.update({"recipientReadStatus":false});
+                // } else {
+                //     await chat.update({"numberOfUnreadText":null,"recipientReadStatus":null});
+                // }
+                // } else {
+                //     if (
+                //         currentSenderStatus?.getDataValue("activeRoom") !==
+                //         roomId
+                //     ) {
+                //         if (unReadTextNo) {
+                //             chat = await chat.increment("numberOfUnreadText", {
+                //                 by: 1,
+                //             });
+                //         } else {
+                //             await chat.update({"numberOfUnreadText":1});
+                //         }
+                //     } else {
+                //         await chat.update({"numberOfUnreadText":null,"recipientReadStatus":null});
+                //     }
 
-                await chat.update({"lastText":msgData.text});
+                await chat.update({
+                    senderId: msgData.senderId,
+                    recipientId: msgData.recipientId,
+                });
+                // chat.setDataValue("recipientId", initialSenderId);
+                // }
+
+                // await chat.update({"lastText":msgData.text});
 
                 // chat.setDataValue("senderId",msgData.senderId)
-            }
+                // }
 
-            let newChat = await chat?.save();
-            const recipient = await User.findByPk(msgData.recipientId);
-            const sender = await User.findByPk(msgData.senderId);
+                let newChat = await chat?.save();
+                const sender = await User.findByPk(msgData.senderId);
 
-            if (message && recipient) {
-                const chatMessage: ChatReturnType = {
-                    _id: message.getDataValue("messageId"),
-                    text: message.getDataValue("text"),
-                    image: message.getDataValue("image"),
-                    audio: message.getDataValue("audio"),
-                    video: message.getDataValue("video"),
-                    sent: message.getDataValue("sent"),
-                    received: message.getDataValue("received"),
-                    pending: message.getDataValue("pending"),
-                    createdAt: message.getDataValue("createdAt"),
-                    user: {
-                        _id: recipient?.getDataValue("userId"),
-                        name: recipient?.getFullname(),
-                        avatar: recipient?.getDataValue("profileImage"),
-                    },
-                };
-                socketIO.to(msgData?.roomId).emit("msg", chatMessage);
-                console.log("Message sent to room", msgData?.roomId)
-                console.log({ UpdatedConv: chat?.dataValues });
-                socketIO.to(String(msgData.roomId)).emit("conversation", newChat);
-                
-                let {data,status} = await axios.get(`http://192.168.1.98:5000/notifications/token/${msgData.recipientId}`)
-                if(status === 200){
-                    let notificationTokens = data.data
-                    let notificationMsgs:NotificationData[] = []
-                    for(let notificationToken of notificationTokens){
-                        let notificationMsg:NotificationData = {
-                            body:"New message",
-                            title:sender?.getFullname()||"Message",
-                            token:notificationToken,
-                            data:{
-                                url:`com.commodity.sl:/chat`}}
-                        notificationMsgs.push(notificationMsg)
+                if (message && sender) {
+                    const chatMessage: IMessage = {
+                        ...message.dataValues,
+                        user: sender.dataValues,
+                    };
+                    console.log(
+                        "Emitting message",
+                        chatMessage,
+                        msgData.roomId
+                    );
+                    socketIO
+                        .to(msgData?.roomId)
+                        .emit("msg", JSON.stringify(chatMessage));
+                    console.log("Message sent to room", msgData?.roomId);
+                    console.log({ UpdatedConv: chat?.dataValues });
+                    socketIO
+                        .to(String(msgData.roomId))
+                        .emit("conversation", newChat);
+
+                    let { data, status } = await axios.get(
+                        `http://192.168.1.98:5000/notifications/token/${msgData.recipientId}`
+                    );
+                    if (status === 200) {
+                        let notificationTokens = data.data;
+                        console.log({notificationTokens})
+                        let notificationMsgs: NotificationData[] = [];
+                        for (let notificationToken of notificationTokens) {
+                            let notificationMsg: NotificationData = {
+                                body: "New message",
+                                title: sender?.getFullname() || "Message",
+                                token: notificationToken,
+                                data: {
+                                    url: `com.fimiz.sl:/chat`,
+                                },
+                            };
+                            notificationMsgs.push(notificationMsg);
+                        }
+                        notification
+                            .sendNotification(notificationMsgs)
+                            .then(() => {
+                                console.log("Notifacation Sent");
+                            })
+                            .catch((err) => {
+                                console.log(err);
+                            });
                     }
-    
-                    notification.sendNotification(notificationMsgs).then(()=>{
-                        console.log("Notifacation Sent")
-                    }).catch((err)=>{
-                        console.log(err)
-                    })
-
                 }
-              
-            }
-
-            // socket.emit('test',JSON.stringify({text:"Welcome to my chat"}))
+            } // socket.emit('test',JSON.stringify({text:"Welcome to my chat"}))
         } catch (err) {
             console.error(err);
         }
@@ -252,57 +303,43 @@ socketIO.on("connection", async (socket) => {
 
     ///////////////////////listen for online status /////////////////////
 
-    socket.on("online", async (data: any) => {
-        try {
-            let status = await Status.findOne({
-                where: { userId: data.userId },
-            });
-            if (!status) {
-                let createdStatus = await Status.create({
-                    online: data.online,
-                    userId: data.userId,
-                });
-                socket.emit("online", createdStatus.dataValues);
-            } else {
-                let updatedStatus = await status.update({
-                    online: data.online,
-                });
-                socket.emit("online", updatedStatus.dataValues);
-            }
-
-            console.log(data);
-            socket.broadcast.emit("online", data);
-        } catch (err) {
-            console.log(err);
-        }
-    });
-
-    //////////////////////// update typing status ///////////////////////
-    socket.on("typing", async (data: any) => {
+    socket.on("online", async (data: OnlineType) => {
         try {
             // let status = await Status.findOne({
             //     where: { userId: data.userId },
             // });
             // if (!status) {
             //     let createdStatus = await Status.create({
-            //         status:"typing",
+            //         online: data.online,
             //         userId: data.userId,
             //     });
-            //     socket.broadcast
-            //         .to(roomId)
-            //         .emit("typing", createdStatus.dataValues);
+            //     socket.emit("online", createdStatus.dataValues);
             // } else {
             //     let updatedStatus = await status.update({
-            //         status:"typing",
+            //         online: data.online,
             //     });
-            //     socket.broadcast
-            //         .to(roomId)
-            //         .emit("typing", updatedStatus.dataValues);
+            //     socket.emit("online", updatedStatus.dataValues);
             // }
-            console.log("Typing from ",data)
-            socket.broadcast
-            .to(data?.roomId)
-            .emit("typing",data);
+
+            // console.log(data);
+            // socketIO.to(data.userId)
+            socket.broadcast.emit(data.userId, JSON.stringify(data));
+        } catch (err) {
+            console.log(err);
+        }
+    });
+
+    //////////////////////// update typing status ///////////////////////
+    socket.on("typing", async (data: TypingType) => {
+        try {
+            console.log("Typing from ", data);
+            // let typingData: {
+            //     userId: string;
+            //     typing: boolean;
+            //     roomId: string;
+            // } = JSON.parse(String(data));
+            // console.log(data)
+            socketIO.to(data?.roomId).emit("typing", JSON.stringify(data));
         } catch (err) {
             console.log(err);
         }
@@ -310,9 +347,12 @@ socketIO.on("connection", async (socket) => {
 
     /////////////////////// listening for recording///////////////////////////////////////
 
-    socket.on("recording", async (data: any) => {
+    socket.on("recording", async (data: RecordingType) => {
         try {
-            socket.broadcast.to(data?.roomId).emit("recording", data);
+      
+            socket.broadcast
+                .to(data.roomId)
+                .emit("recording", JSON.stringify(data));
         } catch (err) {
             console.log(err);
         }
@@ -323,31 +363,33 @@ socketIO.on("connection", async (socket) => {
     socket.on("activeRoom", async (data: any) => {
         try {
             console.log("ACTIVE ROOM", data);
-            roomId = data.roomId
-            socket.join(roomId)
-            console.log(`User with Id ${data.userId} joins room ${data.roomId}`);
+            roomId = data.roomId;
+            socket.join(roomId);
+            console.log(
+                `User with Id ${data.userId} joins room ${data.roomId}`
+            );
             let status = await Status.findOne({
                 where: { userId: data.userId },
             });
             if (!status) {
                 let createdStatus = await Status.create({
-                    activeRoom: data.activeRoom,
+                    activeRoom: roomId,
                     userId: data.userId,
+                    online:data.online
                 });
                 console.log("created", {
-                    activeRoom: createdStatus.getDataValue("activeRoom"),
+                    ActiveRoomStatus: createdStatus.dataValues,
                 });
             } else {
                 let updatedStatus = await status.update({
-                    activeRoom: data.activeRoom,
+                    activeRoom: roomId,
+                    online:data.online
                 });
                 console.log("updated", {
-                    activeRoom: updatedStatus.getDataValue("activeRoom"),
+                    ActiveRoomStatus: updatedStatus.dataValues,
                 });
             }
-            console.log(
-                `User ${data.userId} is active in room ${data.activeRoom}`
-            );
+            console.log(`User ${data.userId} is active in room ${roomId}`);
         } catch (err) {
             console.log(err);
         }

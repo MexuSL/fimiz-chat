@@ -47,10 +47,10 @@ module.exports = {
             },
             verified: {
                 type: Sequelize.BOOLEAN,
-                defaultValue:false
+                defaultValue: false,
             },
-            verificationRank:{
-                type:Sequelize.ENUM("low","medium","high")
+            verificationRank: {
+                type: Sequelize.ENUM("low", "medium", "high"),
             },
             createdAt: {
                 type: Sequelize.DATE,

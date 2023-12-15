@@ -1,8 +1,8 @@
 import { Model, DataTypes } from "sequelize";
 import sequelize from "../database/connection";
+import User from "./Users";
 
-class Message extends Model {
-}
+class Message extends Model {}
 
 Message.init(
     {
@@ -10,7 +10,7 @@ Message.init(
             type: DataTypes.UUID,
             allowNull: false,
             primaryKey: true,
-            defaultValue:DataTypes.UUIDV4
+            defaultValue: DataTypes.UUIDV4,
         },
         senderId: {
             type: DataTypes.UUID,
@@ -37,12 +37,12 @@ Message.init(
         },
         roomId: {
             type: DataTypes.UUID,
-            references:{
-                model:"Rooms",
-                key:'roomId'
+            references: {
+                model: "Rooms",
+                key: "roomId",
             },
-            onDelete:"CASCADE",
-            onUpdate:"CASCADE"
+            onDelete: "CASCADE",
+            onUpdate: "CASCADE",
         },
         sent: {
             type: DataTypes.BOOLEAN,
@@ -68,5 +68,7 @@ Message.init(
         tableName: "Messages",
     }
 );
+
+Message.belongsTo(User, { foreignKey: 'senderId' });
 
 export default Message;

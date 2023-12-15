@@ -2,13 +2,12 @@ import User from "../models/Users";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
-
 export async function jwtEncode(data: any) {
     let encodedData = jwt.sign(data, process.env.APP_SECRET_KEY + "");
     return encodedData;
 }
 
-export async function jwtDecode(token: string):Promise<any> {
+export async function jwtDecode(token: string): Promise<any> {
     let decodedData = jwt.decode(token);
     return decodedData;
 }
@@ -65,9 +64,9 @@ interface UserType {
     email: string;
     createdAt: Date;
     updatedAt?: Date;
-  }
+}
 
-export async function addUser(data:UserType) {
+export async function addUser(data: UserType) {
     try {
         let personal = data;
         let newPersonalInfo;
@@ -83,14 +82,12 @@ export async function addUser(data:UserType) {
             "User created successfully.",
             savePersonalData
         );
-    } catch (err) { 
+    } catch (err) {
         throw err;
     }
 }
 
-
-
-export async function deleteUser(data:{userId:Pick<UserType,'userId'>}) {
+export async function deleteUser(data: { userId: Pick<UserType, "userId"> }) {
     try {
         let { userId } = data;
         let deleteObj = await User.destroy({
@@ -104,14 +101,19 @@ export async function deleteUser(data:{userId:Pick<UserType,'userId'>}) {
     }
 }
 
-export async function updateUserVerification(data:{verificationData:{verified:boolean,verificationRank:string},userId:string}) {
+export async function updateUserVerification(data: {
+    verificationData: { verified: boolean; verificationRank: string };
+    userId: string;
+}) {
     try {
-        let {verificationData,userId } = data;
+        let { verificationData, userId } = data;
         let personalInfo = await User.findOne({
             where: { userId },
         });
         if (personalInfo) {
-            let upatedResponse = await User.update(verificationData,{where:{userId}})
+            let upatedResponse = await User.update(verificationData, {
+                where: { userId },
+            });
             console.log(
                 `Server with Id ${SERVER_ID} Row Affected:, ${upatedResponse[0]}`
             );
@@ -123,7 +125,11 @@ export async function updateUserVerification(data:{verificationData:{verified:bo
     }
 }
 
-export async function updateUser(data:{key:string,value:any,userId:string}) {
+export async function updateUser(data: {
+    key: string;
+    value: any;
+    userId: string;
+}) {
     try {
         let { key, value, userId } = data;
         let personalInfo = await User.findOne({

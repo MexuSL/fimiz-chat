@@ -47,17 +47,15 @@ export default class NotificationService {
         // and to compress them (notifications with similar content will get
         // compressed).
         let chunks = expo.chunkPushNotifications(newMessages);
-        let tickets:ExpoPushTicket[] = [];
+        let tickets: ExpoPushTicket[] = [];
         // Send the chunks to the Expo push notification service. There are
         // different strategies you could use. A simple one is to send one chunk at a
         // time, which nicely spreads the load out over time:
         for (let chunk of chunks) {
             try {
-                let ticketChunk = await expo.sendPushNotificationsAsync(
-                    chunk
-                );
+                let ticketChunk = await expo.sendPushNotificationsAsync(chunk);
                 console.log(ticketChunk);
-                tickets.push(...ticketChunk)
+                tickets.push(...ticketChunk);
                 // NOTE: If a ticket contains an error code in ticket.details.error, you
                 // must handle it appropriately. The error codes are listed in the Expo
                 // documentation:

@@ -1,9 +1,7 @@
 import { Model, DataTypes } from "sequelize";
 import sequelize from "../database/connection";
 
-class Room extends Model {
-
-}
+class Room extends Model {}
 
 Room.init(
     {
@@ -11,7 +9,7 @@ Room.init(
             type: DataTypes.UUID,
             allowNull: false,
             primaryKey: true,
-            defaultValue:DataTypes.UUIDV4
+            defaultValue: DataTypes.UUIDV4,
         },
         senderId: {
             type: DataTypes.UUID,
@@ -26,9 +24,11 @@ Room.init(
         },
         recipientReadStatus: {
             type: DataTypes.BOOLEAN,
+            defaultValue: false,
         },
         numberOfUnreadText: {
             type: DataTypes.INTEGER,
+            defaultValue: 0,
         },
         createdAt: {
             allowNull: false,

@@ -19,7 +19,7 @@ User.init(
             type: DataTypes.UUID,
             allowNull: false,
             primaryKey: true,
-            defaultValue:DataTypes.UUIDV4
+            defaultValue: DataTypes.UUIDV4,
         },
         firstName: {
             type: DataTypes.STRING,
@@ -57,10 +57,10 @@ User.init(
         },
         verified: {
             type: DataTypes.BOOLEAN,
-            defaultValue:false
+            defaultValue: false,
         },
-        verificationRank:{
-            type:DataTypes.ENUM("low","medium","high")
+        verificationRank: {
+            type: DataTypes.ENUM("low", "medium", "high"),
         },
         createdAt: {
             type: DataTypes.DATE,

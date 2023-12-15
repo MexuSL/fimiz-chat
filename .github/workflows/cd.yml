@@ -1,81 +1,76 @@
 name: Chat CD Pipeline
 run-name: Running CD Pipeline;Deploying and Running to ec2
-on: 
+on:
     workflow_run:
         workflows: ["Chat CI Pipeline"]
-        types: 
-           - completed  
-    push: 
-        branches: 
-          - main    
+        types:
+            - completed
+    push:
+        branches:
+            - main
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: Deploy to Server
-      uses: easingthemes/ssh-deploy@main
-      with:
-          SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY}}
-          REMOTE_HOST: ${{ secrets.EC2_HOST_DNS}}
-          REMOTE_USER: ${{ secrets.EC2_USERNAME }}
-          TARGET: ${{ secrets.EC2_TARGET }}
-          EXCLUDE: "/dist/, /node_modules/,/.github/,/assets/,/models/"
-          SCRIPT_BEFORE: |
-           echo "UPDATING LINUX PACKAGES ."
-           sudo apt-get update -y
+    deploy:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+            - name: Deploy to Server
+              uses: easingthemes/ssh-deploy@main
+              with:
+                  SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY}}
+                  REMOTE_HOST: ${{ secrets.EC2_HOST_DNS}}
+                  REMOTE_USER: ${{ secrets.EC2_USERNAME }}
+                  TARGET: ${{ secrets.EC2_TARGET }}
+                  EXCLUDE: "/dist/, /node_modules/,/.github/,/assets/,/models/"
+                  SCRIPT_BEFORE: |
+                      echo "UPDATING LINUX PACKAGES ."
+                      sudo apt-get update -y
 
-           if test -d home;
-              then
-                cd home
-                if test -f docker-compose.yml;
-                then
-                    echo "SHUTTING DOWN DOCKER COMPOSE AND REMOVING EVERYTHING IN THE HOME DIR"
-                    sudo docker-compose down
-                    sudo docker rmi fimiz/chat -f
-                    sudo rm -rf *
-                    echo "DONE SHUTTING DOWN DOCKER COMPOSE"
-                fi
-           fi
-          SCRIPT_AFTER: |
-            echo $RSYNC_STDOUT
-            echo "RUNNING GITHUB RUNNER"
-            current_folder=$(basename pwd)
-            if test "$current_folder" = "home";
-            then
-              if test -f setenv.sh;
-              then
-                echo "SETTING ENVS"
-                sudo chmod +x setenv.sh
-                ./setenv.sh
-              fi
-              if test -f docker-compose.yml;
-              then
-                echo "CURRENT DIRECTORY IS HOME"
-                echo "RUNNING DOCKER-COMPOSE"
-                sudo docker-compose up --build
-              fi
-            else 
-              echo "CURRENT DIRECTORY IS NOT HOME"  
-              if test -d home;
-              then
-                echo "HOME DIR EXIST,CHANGING TO HOME DIR"
-                cd home
-                if test -f setenv.sh;
-                then
-                  echo "SETTING ENVS"
-                  sudo chmod +x setenv.sh
-                  ./setenv.sh
-                fi
-                if test -f docker-compose.yml;
-                then
-                  echo "RUNNING DOCKER-COMPOSE"
-                  sudo docker-compose up --build
-                fi
-              fi
-            fi
-
-
-           
-          
- 
+                      if test -d home;
+                         then
+                           cd home
+                           if test -f docker-compose.yml;
+                           then
+                               echo "SHUTTING DOWN DOCKER COMPOSE AND REMOVING EVERYTHING IN THE HOME DIR"
+                               sudo docker-compose down
+                               sudo docker rmi fimiz/chat -f
+                               sudo rm -rf *
+                               echo "DONE SHUTTING DOWN DOCKER COMPOSE"
+                           fi
+                      fi
+                  SCRIPT_AFTER: |
+                      echo $RSYNC_STDOUT
+                      echo "RUNNING GITHUB RUNNER"
+                      current_folder=$(basename pwd)
+                      if test "$current_folder" = "home";
+                      then
+                        if test -f setenv.sh;
+                        then
+                          echo "SETTING ENVS"
+                          sudo chmod +x setenv.sh
+                          ./setenv.sh
+                        fi
+                        if test -f docker-compose.yml;
+                        then
+                          echo "CURRENT DIRECTORY IS HOME"
+                          echo "RUNNING DOCKER-COMPOSE"
+                          sudo docker-compose up --build
+                        fi
+                      else 
+                        echo "CURRENT DIRECTORY IS NOT HOME"  
+                        if test -d home;
+                        then
+                          echo "HOME DIR EXIST,CHANGING TO HOME DIR"
+                          cd home
+                          if test -f setenv.sh;
+                          then
+                            echo "SETTING ENVS"
+                            sudo chmod +x setenv.sh
+                            ./setenv.sh
+                          fi
+                          if test -f docker-compose.yml;
+                          then
+                            echo "RUNNING DOCKER-COMPOSE"
+                            sudo docker-compose up --build
+                          fi
+                        fi
+                      fi

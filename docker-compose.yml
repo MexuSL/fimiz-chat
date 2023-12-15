@@ -16,22 +16,22 @@ services:
         ports:
             - 2222:8080
         environment:
-              - PORT=8080
-              - PG_DB_PASSWORD=${PG_DB_PASSWORD}
-              - PG_DB_USERNAME=${PG_DB_USERNAME}
-              - PG_DB_HOST=${PG_DB_HOST}
-              - PG_DB_NAME=${PG_DB_NAME}
+            - PORT=8080
+            - PG_DB_PASSWORD=${PG_DB_PASSWORD}
+            - PG_DB_USERNAME=${PG_DB_USERNAME}
+            - PG_DB_HOST=${PG_DB_HOST}
+            - PG_DB_NAME=${PG_DB_NAME}
     fimiz_chat_api_server_3:
         container_name: fimiz_chat_api_server_container_3
         image: fimiz/chat:latest
         ports:
             - 3333:8080
         environment:
-              - PORT=8080
-              - PG_DB_PASSWORD=${PG_DB_PASSWORD}
-              - PG_DB_USERNAME=${PG_DB_USERNAME}
-              - PG_DB_HOST=${PG_DB_HOST}
-              - PG_DB_NAME=${PG_DB_NAME}
+            - PORT=8080
+            - PG_DB_PASSWORD=${PG_DB_PASSWORD}
+            - PG_DB_USERNAME=${PG_DB_USERNAME}
+            - PG_DB_HOST=${PG_DB_HOST}
+            - PG_DB_NAME=${PG_DB_NAME}
     nginx:
         container_name: nginx_container
         build:
