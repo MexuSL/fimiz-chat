@@ -90,7 +90,7 @@ socketIO.on("connection", async (socket) => {
                     online: true,
                 });
                 console.log({"Start":updatedStatus.dataValues})
-                socket.emit(String(userId), JSON.stringify({...updatedStatus.dataValues,online:"true"}));
+                socket.broadcast.emit(String(userId), JSON.stringify({...updatedStatus.dataValues}));
             }
             console.log(`Starting User with Id ${userId} is online`);
         } catch (err) {
@@ -160,6 +160,7 @@ socketIO.on("connection", async (socket) => {
                         msgData.pending = true;
                     }
                 }
+
                 if (msgData.text !== "") {
                     chat.setDataValue("lastText", msgData.text);
                 } else if (msgData.audio !== "") {
@@ -339,7 +340,7 @@ socketIO.on("connection", async (socket) => {
             //     roomId: string;
             // } = JSON.parse(String(data));
             // console.log(data)
-            socketIO.to(data?.roomId).emit("typing", JSON.stringify(data));
+            socket.broadcast.to(data?.roomId).emit("typing", JSON.stringify(data));
         } catch (err) {
             console.log(err);
         }
@@ -407,8 +408,8 @@ socketIO.on("connection", async (socket) => {
                     online: false,
                     activeRoom: null,
                 });
-                console.log(`User with Id ${userId} is offline`);
-                socket.broadcast.emit(String(userId), updatedStatus.dataValues);
+                console.log(`User with Id ${userId} is offline`,updatedStatus.dataValues);
+                socket.broadcast.emit(String(userId), JSON.stringify({...updatedStatus.dataValues}));
             } else {
             }
         } catch (err) {
