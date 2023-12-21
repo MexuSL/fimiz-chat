@@ -17,12 +17,18 @@ module.exports = {
                 type: Sequelize.UUID,
                 allowNull: false,
             },
+            partialDeletedById: {
+                type: Sequelize.UUID,
+            },
             lastText: {
                 type: Sequelize.TEXT,
             },
             recipientReadStatus: {
                 type: Sequelize.BOOLEAN,
                 defaultValue: false,
+            },
+            messageType: {
+                type: Sequelize.STRING,
             },
             numberOfUnreadText: {
                 type: Sequelize.INTEGER,

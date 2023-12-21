@@ -19,17 +19,6 @@ Room.init(
             type: DataTypes.UUID,
             allowNull: false,
         },
-        lastText: {
-            type: DataTypes.TEXT,
-        },
-        recipientReadStatus: {
-            type: DataTypes.BOOLEAN,
-            defaultValue: false,
-        },
-        numberOfUnreadText: {
-            type: DataTypes.INTEGER,
-            defaultValue: 0,
-        },
         createdAt: {
             allowNull: false,
             type: DataTypes.DATE,

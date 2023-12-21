@@ -17,6 +17,15 @@ module.exports = {
                 type: Sequelize.UUID,
                 allowNull: false,
             },
+            partialDeletedById: {
+                type: Sequelize.UUID,
+            },
+            completeDeletedById: {
+                type: Sequelize.UUID,
+            },
+            messageType: {
+                type: Sequelize.STRING,
+            },
             text: {
                 type: Sequelize.TEXT(60000),
             },

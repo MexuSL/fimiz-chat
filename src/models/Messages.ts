@@ -20,6 +20,12 @@ Message.init(
             type: DataTypes.UUID,
             allowNull: false,
         },
+        partialDeletedById: {
+            type: DataTypes.UUID,
+        },
+        messageType: {
+            type: DataTypes.STRING,
+        },
         text: {
             type: DataTypes.TEXT,
         },
@@ -69,6 +75,6 @@ Message.init(
     }
 );
 
-Message.belongsTo(User, { foreignKey: 'senderId' });
+Message.belongsTo(User, { foreignKey: "senderId" });
 
 export default Message;
