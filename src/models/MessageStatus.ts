@@ -3,6 +3,7 @@
 import { DataTypes, Model } from "sequelize";
 import sequelize from "../database/connection";
 import Message from "./Messages";
+import User from "./Users";
 
 export interface MessageStatusAttributes {
     messageStatusId: string;
@@ -53,6 +54,12 @@ MessageStatus.init(
 // Define associations
 MessageStatus.belongsTo(Message, {
     foreignKey: "messageId",
+    onUpdate: "CASCADE",
+    onDelete: "CASCADE",
+});
+
+MessageStatus.belongsTo(User, {
+    foreignKey: "userId",
     onUpdate: "CASCADE",
     onDelete: "CASCADE",
 });

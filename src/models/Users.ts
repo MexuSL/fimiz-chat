@@ -1,5 +1,6 @@
 import { DataTypes, Model, Sequelize } from "sequelize";
 import sequelize from "../database/connection";
+import Status from "./Status";
 
 class User extends Model {
     public getFullname() {
@@ -82,5 +83,6 @@ User.init(
         updatedAt: "updatedAt",
     }
 );
+User.hasOne(Status, { foreignKey: "userId" }); 
 
 export default User;

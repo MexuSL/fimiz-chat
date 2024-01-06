@@ -9,6 +9,7 @@ import {
     IMessage,
     OnlineType,
     RecordingType,
+    RoomReturnType,
     TypingType,
 } from "../src/types/types";
 import { Server } from "socket.io";
@@ -61,13 +62,12 @@ app.get("/", (req, res) => {
 });
 
 // socketIO.send("Hello client")
-
 socketIO.on("connection", async (socket) => {
     let roomId = socket.handshake.query.roomId || ("" satisfies string);
     let userId = socket.handshake.query.userId;
     let roomType = socket.handshake.query.roomType || "";
     console.log({ roomId, roomType, userId });
-
+    
     if (roomId) {
         /// connect or join a room if users click on the chat button on the frontend///////////////
         socket.join(String(roomId));
@@ -208,12 +208,14 @@ socketIO.on("connection", async (socket) => {
                 received: msgData.received,
                 pending: msgData.pending,
             });
+            console.log("Message create",message)
             // if (initialSenderId !== msgData.senderId && chat.getDataValue("lastText") !== null) {
             //     await chat.update({
             //         numberOfUnreadText: 0,
             //         recipientReadStatus: true,
             //     });
             // }
+            let messageStatus
             let msgStatuses = [
                 {
                     userId: msgData.recipientId,
@@ -230,7 +232,7 @@ socketIO.on("connection", async (socket) => {
             ];
 
             if (recipientActiveRoom === msgData.roomId) {
-                let messageStatus = await MessageStatus.bulkCreate(msgStatuses);
+                messageStatus = await MessageStatus.bulkCreate(msgStatuses);
                 console.log("Bulkcreated Message", messageStatus);
             } else {
                 let msgStatuses = [
@@ -247,11 +249,14 @@ socketIO.on("connection", async (socket) => {
                         read: true,
                     },
                 ];
-                let messageStatus = await MessageStatus.bulkCreate(msgStatuses);
+                messageStatus = await MessageStatus.bulkCreate(msgStatuses);
                 console.log("Bulkcreated Message", messageStatus);
-            }
-
-            const sender = await User.findByPk(msgData.senderId);
+                 }
+            const sender = await User.findOne({where:{userId:msgData.senderId},include:[
+                {
+                  model: Status
+                },
+              ]})
 
             if (message && sender) {
                 const chatMessage: IMessage = {
@@ -264,39 +269,79 @@ socketIO.on("connection", async (socket) => {
                     .emit("msg", JSON.stringify(chatMessage));
                 console.log("Message sent to room", msgData?.roomId);
 
-                socket
-                    .to(String(msgData.roomId))
-                    .emit(
-                        "conversation",
-                        JSON.stringify({roomId:msgData.roomId})
-                    );
-                let { data, status } = await axios.get(
-                    `http://192.168.1.98:5000/notifications/token/${msgData.recipientId}`
-                );
-                if (status === 200) {
-                    let notificationTokens = data.data;
-                    console.log({ notificationTokens });
-                    let notificationMsgs: NotificationData[] = [];
-                    for (let notificationToken of notificationTokens) {
-                        let notificationMsg: NotificationData = {
-                            body: "New message",
-                            title: sender?.getFullname() || "Message",
-                            token: notificationToken,
-                            data: {
-                                url: `com.fimiz.sl:/chat`,
-                            },
-                        };
-                        notificationMsgs.push(notificationMsg);
-                    }
-                    notification
-                        .sendNotification(notificationMsgs)
-                        .then(() => {
-                            console.log("Notifacation Sent");
-                        })
-                        .catch((err) => {
-                            console.log(err);
-                        });
+                let {count} = await MessageStatus.findAndCountAll({where:{roomId:msgData.roomId,userId:msgData.recipientId,read:false}})
+                
+                let recipient = await User.findOne({where:{userId:msgData.recipientId},include:[
+                    {
+                      model: Status
+                    },
+                  ]})
+              
+                let recipientReturnRoom:RoomReturnType = {
+                    roomId:msgData.roomId,
+                    recipientId:msgData.recipientId,
+                    senderId:msgData.senderId,
+                    recipientReadStatus:recipientActiveRoom === msgData.roomId,
+                    lastText:msgData.text || "",
+                    messageType:msgData.messageType,
+                    createdAt:message.getDataValue("createdAt"),
+                    updatedAt:message.getDataValue("updatedAt"),
+                    numberOfUnreadText:count
                 }
+
+                console.log("Emmiting conversation for recipient",recipientReturnRoom)
+                socket.broadcast.emit(
+                        `conversation-${msgData.recipientId}`,
+                        JSON.stringify({room:recipientReturnRoom,user:{...recipient?.dataValues,status:recipient?.getDataValue("Status")}})
+                    );
+
+                let senderReturnRoom:RoomReturnType = {
+                        roomId:msgData.roomId,
+                        recipientId:msgData.recipientId,
+                        senderId:msgData.senderId,
+                        recipientReadStatus:true,
+                        lastText:msgData.text || "",
+                        messageType:msgData.messageType,
+                        createdAt:message.getDataValue("createdAt"),
+                        updatedAt:message.getDataValue("updatedAt"),
+                        numberOfUnreadText:0
+                    }
+
+                
+                    console.log("Emmiting conversation for sender",senderReturnRoom)
+                socket.emit(
+                        `conversation-${msgData.senderId}`,
+                        JSON.stringify({room:senderReturnRoom,user:{...recipient?.dataValues,status:recipient?.getDataValue("Status")}})
+                    );
+ 
+                // let { data, status } = await axios.get(
+                //     `http://192.168.1.105:5000/notifications/token/${msgData.recipientId}`
+                // );
+
+                // if (status === 200) {
+                //     let notificationTokens = data.data;
+                //     console.log({ notificationTokens });
+                //     let notificationMsgs: NotificationData[] = [];
+                //     for (let notificationToken of notificationTokens) {
+                //         let notificationMsg: NotificationData = {
+                //             body: "New message",
+                //             title: sender?.getFullname() || "Message",
+                //             token: notificationToken,
+                //             data: {
+                //                 url: `com.fimiz.sl:/chat`,
+                //             },
+                //         };
+                //         notificationMsgs.push(notificationMsg);
+                //     }
+                //     notification
+                //         .sendNotification(notificationMsgs)
+                //         .then(() => {
+                //             console.log("Notifacation Sent");
+                //         })
+                //         .catch((err) => {
+                //             console.log(err);
+                //         });
+                // }
             }
         } catch (err) {
             console.error(err);
@@ -342,6 +387,18 @@ socketIO.on("connection", async (socket) => {
             console.log(err);
         }
     });
+
+        /////////////////////// listening for delete message ///////////////////////////////////////
+
+    socket.on("delete", async (data: any) => {
+            try {
+                socket.broadcast
+                    .to(data.roomId)
+                    .emit("delete", JSON.stringify(data));
+            } catch (err) {
+                console.log(err);
+            }
+        });
 
     /////////////////////// update and check if a user is on a particular Room ////////////////
 

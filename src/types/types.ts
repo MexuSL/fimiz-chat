@@ -69,3 +69,15 @@ export type TypingType = {
     userId: string;
     typing: boolean;
 };
+
+export interface RoomReturnType {
+    roomId: string;
+    senderId: string;
+    recipientId: string;
+    lastText: string;
+    messageType: string;
+    recipientReadStatus: boolean;
+    numberOfUnreadText: number;
+    createdAt: Date; // Assuming time.Time in Go is equivalent to Date in TypeScript
+    updatedAt: Date;
+  }
