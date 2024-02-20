@@ -65,6 +65,7 @@ User.init(
         },
         verificationRank: {
             type: DataTypes.ENUM("low", "medium", "high"),
+            defaultValue:"low"
         },
         createdAt: {
             type: DataTypes.DATE,

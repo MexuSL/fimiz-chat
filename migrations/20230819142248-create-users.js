@@ -51,6 +51,7 @@ module.exports = {
             },
             verificationRank: {
                 type: Sequelize.ENUM("low", "medium", "high"),
+                defaultValue:"low"
             },
             createdAt: {
                 type: Sequelize.DATE,

@@ -1,15 +1,13 @@
+"use strict";
 // import { Router, Request, Response } from "express";
 // import { getResponseBody, responseStatus, responseStatusCode } from "../utils";
 // import Status from "../models/Status";
-
 // const router = Router();
 // router.get("/status/:userId", async (req: Request, res: Response) => {
 //     try {
 //         let { userId } = req.params;
-
 //         let status = await Status.findOne({ where: { userId } });
 //         console.log({ Status: status });
-
 //         if (!status) {
 //             return res
 //                 .status(responseStatusCode.OK)
@@ -32,5 +30,4 @@
 //         );
 //     }
 // });
-
 // export default router;

@@ -1,7 +1,7 @@
 services:
-    fimiz_socket_1:
-        container_name: fimiz_socket_container_1
-        image: fimiz-socket
+    fimiz_chat_1:
+        container_name: fimiz_chat_container_1
+        image: fimiz/socket:latest
         ports:
             - 3001:3001
         environment:
@@ -10,9 +10,9 @@ services:
             - DB_USERNAME=${DB_USERNAME}
             - DB_HOST=${DB_HOST}
             - DB_NAME=${DB_NAME}
-    fimiz_socket_2:
-        container_name: fimiz_socket_container_2
-        image: fimiz-socket
+    fimiz_chat_2:
+        container_name: fimiz_chat_container_2
+        image: fimiz/socket:latest
         ports:
             - 3002:3000
         environment:
@@ -21,9 +21,9 @@ services:
             - DB_USERNAME=${DB_USERNAME}
             - DB_HOST=${DB_HOST}
             - DB_NAME=${DB_NAME}
-    fimiz_socket_3:
-        container_name: fimiz_socket_container_3
-        image: fimiz-socket
+    fimiz_chat_3:
+        container_name: fimiz_chat_container_3
+        image: fimiz/socket:latest
         ports:
             - 3003:3003
         environment:
@@ -33,7 +33,7 @@ services:
             - DB_HOST=${DB_HOST}
             - DB_NAME=${DB_NAME}
     nginx:
-        container_name: fimiz_socket_nginx_container
+        container_name: nginx_container
         build:
             context: ./nginx/
             dockerfile: Dockerfile

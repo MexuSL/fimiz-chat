@@ -1,7 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { jwtDecode } from "../utils";
-
-jwtDecode;
+import { jwtDecode, responseStatusCode } from "../utils";
 
 export default async (
     request: Request,
@@ -27,10 +25,8 @@ export default async (
         next();
         return;
     } else {
-        response.locals = {
-            userId: "",
-        };
-        next();
-        return;
+        return response.status(responseStatusCode.UNATHORIZED).json({
+            message:"Authorization token is required"
+        })
     }
 };
