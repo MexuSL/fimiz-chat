@@ -28,7 +28,7 @@
 //                     limit: numberOfRecord,
 //                     offset: start,
 //                 });
-//             // console.log({chats:chats[0].dataValues})
+//             // // console.log({chats:chats[0].dataValues})
 //             const formattedChats: any = await Promise.all(
 //                 chats.map(async (chat) => {
 //                     let _user = await User.findOne({

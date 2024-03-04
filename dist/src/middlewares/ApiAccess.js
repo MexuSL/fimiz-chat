@@ -6,8 +6,8 @@ exports.default = async (request, response, next) => {
     let accessToken = authorization?.split(" ")[1];
     if (accessToken) {
         let decodedData = (await (0, utils_1.jwtDecode)(accessToken));
-        // console.log("Decoded Access Key", decodedData);
-        // console.log(decodedData);
+        // // console.log("Decoded Access Key", decodedData);
+        // // console.log(decodedData);
         response.locals = {
             userId: decodedData?.userId,
             token: accessToken,

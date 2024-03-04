@@ -19,6 +19,7 @@ export default class NotificationService {
      * sendNotification
      */
     public async sendNotification(messages: NotificationData[]) {
+  
         let newMessages: ExpoPushMessage[] = [];
         for (let msg of messages) {
             // Each push token looks like ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]
@@ -54,16 +55,17 @@ export default class NotificationService {
         for (let chunk of chunks) {
             try {
                 let ticketChunk = await expo.sendPushNotificationsAsync(chunk);
-                console.log(ticketChunk);
+                // console.log(ticketChunk);
                 tickets.push(...ticketChunk);
                 // NOTE: If a ticket contains an error code in ticket.details.error, you
                 // must handle it appropriately. The error codes are listed in the Expo
                 // documentation:
                 // https://docs.expo.io/push-notifications/sending-notifications/#individual-errors
             } catch (error) {
-                console.error(error);
+                  throw error
+           
             }
         }
-        console.log("Notification Sent");
+        // console.log("Notification Sent");
     }
 }

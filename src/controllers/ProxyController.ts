@@ -8,7 +8,7 @@
 //         let { userId } = req.params;
 
 //         let status = await Status.findOne({ where: { userId } });
-//         console.log({ Status: status });
+//         // console.log({ Status: status });
 
 //         if (!status) {
 //             return res
@@ -26,7 +26,7 @@
 //             data: status.dataValues,
 //         });
 //     } catch (err) {
-//         console.log(err);
+//         // console.log(err);
 //         res.status(responseStatusCode.BAD_REQUEST).json(
 //             getResponseBody(responseStatus.ERROR, String(err))
 //         );

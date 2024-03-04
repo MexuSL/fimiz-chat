@@ -9,14 +9,21 @@ export default async (
     let { authorization } = request.headers;
     let accessToken = authorization?.split(" ")[1];
 
+
+    let url   = request.url
+    if(url.includes("metrics")){
+        next()
+        return
+    }
+
     if (accessToken) {
         let decodedData = (await jwtDecode(accessToken)) as {
             userId: string;
             keys: Record<string, string>;
             accountNumber: string;
         };
-        // console.log("Decoded Access Key", decodedData);
-        // console.log(decodedData);
+        // // console.log("Decoded Access Key", decodedData);
+        // // console.log(decodedData);
         response.locals = {
             userId: decodedData?.userId,
             token: accessToken,

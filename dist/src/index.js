@@ -36,7 +36,7 @@ app.use(ApiAccess_1.default);
 const server = http_1.default.createServer(app);
 ///// RUN USER CONSUMER FROM KAFKA BROKERS ////////
 // runUserConsumer().catch(err =>{
-//     console.log("Consumer Error from Server with Id",process.env.SERVER_ID,"=>",err)
+//     // console.log("Consumer Error from Server with Id",process.env.SERVER_ID,"=>",err)
 // })
 const socketIO = new socket_io_1.Server(server, {
     cors: { origin: "*", methods: ["GET", "POST"] },
@@ -50,11 +50,11 @@ socketIO.on("connection", async (socket) => {
     let roomId = socket.handshake.query.roomId || ("");
     let userId = socket.handshake.query.userId;
     let roomType = socket.handshake.query.roomType || "";
-    console.log({ roomId, roomType, userId });
+    // console.log({ roomId, roomType, userId });
     if (roomId) {
         /// connect or join a room if users click on the chat button on the frontend///////////////
         socket.join(String(roomId));
-        console.log(`User with Id ${userId} is joins room ${roomId}`);
+        // console.log(`User with Id ${userId} is joins room ${roomId}`);
     }
     if (userId) {
         try {
@@ -74,7 +74,7 @@ socketIO.on("connection", async (socket) => {
                 socket.broadcast
                     .to(roomId)
                     .emit(`${userId}-pending`, JSON.stringify({ pending: false }));
-                console.log(`Updated ${updatedMessageRows} rows`);
+                // console.log(`Updated ${updatedMessageRows} rows`);
             }
             let status = await Status_1.default.findOne({
                 where: { userId },
@@ -88,30 +88,30 @@ socketIO.on("connection", async (socket) => {
                     ...createdStatus.dataValues,
                     online: "true",
                 }));
-                console.log({ Start: createdStatus.dataValues });
+                // console.log({ Start: createdStatus.dataValues });
             }
             else {
                 let updatedStatus = await status.update({
                     online: true,
                 });
-                console.log({ Start: updatedStatus.dataValues });
+                // console.log({ Start: updatedStatus.dataValues });
                 socket.broadcast.emit(String(userId), JSON.stringify({ ...updatedStatus.dataValues }));
             }
-            console.log(`Starting User with Id ${userId} is online`);
+            // console.log(`Starting User with Id ${userId} is online`);
         }
         catch (err) {
-            console.log(err);
+            // console.log(err);
         }
     }
     /////////////////// JOIN A ROOM //////////////////////
     socket.on("joinRoom", (data) => {
         socket.join(data.roomId);
-        console.log(`User with Id ${data.userId} joins room ${data.roomId}`);
+        // console.log(`User with Id ${data.userId} joins room ${data.roomId}`);
     });
     socket.on("msg", async (msgData) => {
         try {
-            // console.log("From user 2");
-            console.log("Message from client", msgData);
+            // // console.log("From user 2");
+            // console.log("Message from client", msgData);
             msgData.received = false;
             msgData.pending = false;
             msgData.sent = true;
@@ -157,7 +157,7 @@ socketIO.on("connection", async (socket) => {
                 received: msgData.received,
                 pending: msgData.pending,
             });
-            console.log("Message create", message);
+            // console.log("Message create", message);
             // if (initialSenderId !== msgData.senderId && chat.getDataValue("lastText") !== null) {
             //     await chat.update({
             //         numberOfUnreadText: 0,
@@ -181,7 +181,7 @@ socketIO.on("connection", async (socket) => {
             ];
             if (recipientActiveRoom === msgData.roomId) {
                 messageStatus = await MessageStatus_1.MessageStatus.bulkCreate(msgStatuses);
-                console.log("Bulkcreated Message", messageStatus);
+                // console.log("Bulkcreated Message", messageStatus);
             }
             else {
                 let msgStatuses = [
@@ -199,7 +199,7 @@ socketIO.on("connection", async (socket) => {
                     },
                 ];
                 messageStatus = await MessageStatus_1.MessageStatus.bulkCreate(msgStatuses);
-                console.log("Bulkcreated Message", messageStatus);
+                // console.log("Bulkcreated Message", messageStatus);
             }
             const sender = await Users_1.default.findOne({ where: { userId: msgData.senderId }, include: [
                     {
@@ -211,11 +211,11 @@ socketIO.on("connection", async (socket) => {
                     ...message.dataValues,
                     user: sender.dataValues,
                 };
-                console.log("Emitting message", chatMessage, msgData.roomId);
+                // console.log("Emitting message", chatMessage, msgData.roomId);
                 socketIO
                     .to(msgData?.roomId)
                     .emit("msg", JSON.stringify(chatMessage));
-                console.log("Message sent to room", msgData?.roomId);
+                // console.log("Message sent to room", msgData?.roomId);
                 let { count } = await MessageStatus_1.MessageStatus.findAndCountAll({ where: { roomId: msgData.roomId, userId: msgData.recipientId, read: false } });
                 let recipient = await Users_1.default.findOne({ where: { userId: msgData.recipientId }, include: [
                         {
@@ -233,7 +233,7 @@ socketIO.on("connection", async (socket) => {
                     updatedAt: message.getDataValue("updatedAt"),
                     numberOfUnreadText: count
                 };
-                console.log("Emmiting conversation for recipient", recipientReturnRoom);
+                // console.log("Emmiting conversation for recipient", recipientReturnRoom);
                 socket.broadcast.emit(`conversation-${msgData.recipientId}`, JSON.stringify({ room: recipientReturnRoom, user: { ...recipient?.dataValues, status: recipient?.getDataValue("Status") } }));
                 let senderReturnRoom = {
                     roomId: msgData.roomId,
@@ -246,14 +246,14 @@ socketIO.on("connection", async (socket) => {
                     updatedAt: message.getDataValue("updatedAt"),
                     numberOfUnreadText: 0
                 };
-                console.log("Emmiting conversation for sender", senderReturnRoom);
+                // console.log("Emmiting conversation for sender", senderReturnRoom);
                 socket.emit(`conversation-${msgData.senderId}`, JSON.stringify({ room: senderReturnRoom, user: { ...recipient?.dataValues, status: recipient?.getDataValue("Status") } }));
                 // let { data, status } = await axios.get(
                 //     `http://192.168.1.105:5000/notifications/token/${msgData.recipientId}`
                 // );
                 // if (status === 200) {
                 //     let notificationTokens = data.data;
-                //     console.log({ notificationTokens });
+                //     // console.log({ notificationTokens });
                 //     let notificationMsgs: NotificationData[] = [];
                 //     for (let notificationToken of notificationTokens) {
                 //         let notificationMsg: NotificationData = {
@@ -269,10 +269,10 @@ socketIO.on("connection", async (socket) => {
                 //     notification
                 //         .sendNotification(notificationMsgs)
                 //         .then(() => {
-                //             console.log("Notifacation Sent");
+                //             // console.log("Notifacation Sent");
                 //         })
                 //         .catch((err) => {
-                //             console.log(err);
+                //             // console.log(err);
                 //         });
                 // }
             }
@@ -287,25 +287,25 @@ socketIO.on("connection", async (socket) => {
             socket.broadcast.emit(data.userId, JSON.stringify(data));
         }
         catch (err) {
-            console.log(err);
+            // console.log(err);
         }
     });
     //////////////////////// update typing status ///////////////////////
     socket.on("typing", async (data) => {
         try {
-            console.log("Typing from ", data);
+            // console.log("Typing from ", data);
             // let typingData: {
             //     userId: string;
             //     typing: boolean;
             //     roomId: string;
             // } = JSON.parse(String(data));
-            // console.log(data)
+            // // console.log(data)
             socket.broadcast
                 .to(data?.roomId)
                 .emit("typing", JSON.stringify(data));
         }
         catch (err) {
-            console.log(err);
+            // console.log(err);
         }
     });
     /////////////////////// listening for recording///////////////////////////////////////
@@ -316,7 +316,7 @@ socketIO.on("connection", async (socket) => {
                 .emit("recording", JSON.stringify(data));
         }
         catch (err) {
-            console.log(err);
+            // console.log(err);
         }
     });
     /////////////////////// listening for delete message ///////////////////////////////////////
@@ -327,16 +327,16 @@ socketIO.on("connection", async (socket) => {
                 .emit("delete", JSON.stringify(data));
         }
         catch (err) {
-            console.log(err);
+            // console.log(err);
         }
     });
     /////////////////////// update and check if a user is on a particular Room ////////////////
     socket.on("activeRoom", async (data) => {
         try {
-            console.log("ACTIVE ROOM", data);
+            // console.log("ACTIVE ROOM", data);
             roomId = data.roomId;
             socket.join(roomId);
-            console.log(`User with Id ${data.userId} Is Active on room ${data.roomId}`);
+            // console.log(`User with Id ${data.userId} Is Active on room ${data.roomId}`);
             // update all messages
             let message = await Messages_1.default.findOne({
                 where: {
@@ -355,7 +355,7 @@ socketIO.on("connection", async (socket) => {
                 socket.broadcast
                     .to(roomId)
                     .emit("received", JSON.stringify({ received: true, roomId }));
-                console.log(`Updated ${updatedMessageRows} rows`);
+                // console.log(`Updated ${updatedMessageRows} rows`);
             }
             let messageStatus = await MessageStatus_1.MessageStatus.findOne({
                 where: {
@@ -372,7 +372,7 @@ socketIO.on("connection", async (socket) => {
                         userId: userId,
                     },
                 });
-                console.log(`Updated ${updatedMessageStatusRows} rows`);
+                // console.log(`Updated ${updatedMessageStatusRows} rows`);
             }
             let status = await Status_1.default.findOne({
                 where: { userId: data.userId },
@@ -383,7 +383,7 @@ socketIO.on("connection", async (socket) => {
                     userId: data.userId,
                     online: data.online,
                 });
-                console.log("created", {
+                // console.log("created", {
                     ActiveRoomStatus: createdStatus.dataValues,
                 });
             }
@@ -392,14 +392,14 @@ socketIO.on("connection", async (socket) => {
                     activeRoom: roomId,
                     online: data.online,
                 });
-                console.log("updated", {
+                // console.log("updated", {
                     ActiveRoomStatus: updatedStatus.dataValues,
                 });
             }
-            console.log(`User ${data.userId} is active in room ${roomId}`);
+            // console.log(`User ${data.userId} is active in room ${roomId}`);
         }
         catch (err) {
-            console.log(err);
+            // console.log(err);
         }
     });
     //////////////////////// LISTEN FOR DISCONNECTION /////////////////////////////////////////////
@@ -413,18 +413,18 @@ socketIO.on("connection", async (socket) => {
                     online: false,
                     activeRoom: null,
                 });
-                console.log(`User with Id ${userId} is offline`, updatedStatus.dataValues);
+                // console.log(`User with Id ${userId} is offline`, updatedStatus.dataValues);
                 socket.broadcast.emit(String(userId), JSON.stringify({ ...updatedStatus.dataValues }));
             }
             else {
             }
         }
         catch (err) {
-            console.log(err);
+            // console.log(err);
         }
     });
 });
 let PORT = process.env.PORT;
 server.listen(PORT, () => {
-    console.log("Server started on port ", PORT);
+    // console.log("Server started on port ", PORT);
 });

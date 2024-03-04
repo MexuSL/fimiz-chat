@@ -60,7 +60,7 @@ async function addUser(data) {
         let savePersonalData = await Users_1.default.findOne({
             where: { email: personal?.email },
         });
-        console.log(process.env.SERVER_ID, "User created successfully.", savePersonalData);
+        // console.log(process.env.SERVER_ID, "User created successfully.", savePersonalData);
     }
     catch (err) {
         throw err;
@@ -74,7 +74,7 @@ async function deleteUser(data) {
             where: { userId },
         });
         if (deleteObj > 0) {
-            console.log(process.env.SERVER_ID, "User deleted successfully.");
+            // console.log(process.env.SERVER_ID, "User deleted successfully.");
         }
     }
     catch (err) {
@@ -92,10 +92,10 @@ async function updateUserVerification(data) {
             let upatedResponse = await Users_1.default.update(verificationData, {
                 where: { userId },
             });
-            console.log(`Server with Id ${SERVER_ID} Row Affected:, ${upatedResponse[0]}`);
+            // console.log(`Server with Id ${SERVER_ID} Row Affected:, ${upatedResponse[0]}`);
         }
         else {
-            console.log("User doesnot exist.");
+            // console.log("User doesnot exist.");
         }
     }
     catch (err) {
@@ -113,21 +113,21 @@ async function updateUser(data) {
             if (key === "password") {
                 personalInfo?.set(key, await hashData(value));
                 let info = await personalInfo?.save();
-                console.log(`Server with Id ${SERVER_ID} Row Affected:, ${info}`);
+                // console.log(`Server with Id ${SERVER_ID} Row Affected:, ${info}`);
             }
             else if (key === "pinCode") {
                 personalInfo?.set(key, await hashData(value));
                 let info = await personalInfo?.save();
-                console.log(`Server with Id ${SERVER_ID} Row Affected:, ${info}`);
+                // console.log(`Server with Id ${SERVER_ID} Row Affected:, ${info}`);
             }
             else {
                 personalInfo?.set(key, value);
                 let info = await personalInfo?.save();
-                console.log(`Server with Id ${SERVER_ID} Row Affected:, ${info}`);
+                // console.log(`Server with Id ${SERVER_ID} Row Affected:, ${info}`);
             }
         }
         else {
-            console.log("User doesnot exist.");
+            // console.log("User doesnot exist.");
         }
     }
     catch (err) {
