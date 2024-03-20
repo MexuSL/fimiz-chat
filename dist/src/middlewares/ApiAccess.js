@@ -5,7 +5,7 @@ exports.default = async (request, response, next) => {
     let { authorization } = request.headers;
     let accessToken = authorization?.split(" ")[1];
     if (accessToken) {
-        let decodedData = (await (0, utils_1.jwtDecode)(accessToken));
+        let decodedData = await (0, utils_1.jwtDecode)(accessToken);
         // // console.log("Decoded Access Key", decodedData);
         // // console.log(decodedData);
         response.locals = {
@@ -15,10 +15,9 @@ exports.default = async (request, response, next) => {
         };
         next();
         return;
-    }
-    else {
+    } else {
         return response.status(utils_1.responseStatusCode.UNATHORIZED).json({
-            message: "Authorization token is required"
+            message: "Authorization token is required",
         });
     }
 };

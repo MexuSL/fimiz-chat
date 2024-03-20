@@ -19,7 +19,6 @@ export default class NotificationService {
      * sendNotification
      */
     public async sendNotification(messages: NotificationData[]) {
-  
         let newMessages: ExpoPushMessage[] = [];
         for (let msg of messages) {
             // Each push token looks like ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]
@@ -62,8 +61,7 @@ export default class NotificationService {
                 // documentation:
                 // https://docs.expo.io/push-notifications/sending-notifications/#individual-errors
             } catch (error) {
-                  throw error
-           
+                throw error;
             }
         }
         // console.log("Notification Sent");

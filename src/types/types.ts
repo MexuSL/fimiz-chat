@@ -70,7 +70,7 @@ export type TypingType = {
     typing: boolean;
 };
 
-export interface RoomReturnType {
+export type RoomReturnType = {
     roomId: string;
     senderId: string;
     recipientId: string;
@@ -78,6 +78,16 @@ export interface RoomReturnType {
     messageType: string;
     recipientReadStatus: boolean;
     numberOfUnreadText: number;
-    createdAt: Date; // Assuming time.Time in Go is equivalent to Date in TypeScript
+    deleted?:boolean;
+    muted?: boolean;
+    archived?: boolean;
+    pinned?: boolean;
+    deletedAt?: Date | null;
+    mutedAt?: Date | null;
+    pinnedAt?: Date | null;
+    archivedAt?: Date | null;
+    createdAt: Date;
     updatedAt: Date;
-  }
+};
+
+

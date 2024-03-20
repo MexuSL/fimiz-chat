@@ -18,23 +18,28 @@ import Message from "./models/Messages";
 import authorizeApiAccess from "./middlewares/ApiAccess";
 import NotificationService from "./services/notification_service";
 import { MessageStatus } from "./models/MessageStatus";
-import { Counter, Histogram,collectDefaultMetrics,register } from 'prom-client';
-import responseTime from 'response-time';
+import {
+    Counter,
+    Histogram,
+    collectDefaultMetrics,
+    register,
+} from "prom-client";
+import responseTime from "response-time";
 import axios from "axios";
 
 const requestCounter = new Counter({
-    name: 'http_requests_total',
-    help: 'SOCKET- Total number of HTTP requests',
-    labelNames: ['method', 'path', 'status']
-  });
+    name: "http_requests_total",
+    help: "SOCKET- Total number of HTTP requests",
+    labelNames: ["method", "path", "status"],
+});
 
-  // Create a histogram to track response time
+// Create a histogram to track response time
 const responseTimeHistogram = new Histogram({
-    name: 'http_request_duration_seconds',
-    help: 'SOCKET-  Duration of HTTP requests in seconds',
-    labelNames: ['method', 'path'],
-    buckets: [0.1, 0.5, 1, 2, 5] // Specify custom buckets for response time
-  });
+    name: "http_request_duration_seconds",
+    help: "SOCKET-  Duration of HTTP requests in seconds",
+    labelNames: ["method", "path"],
+    buckets: [0.1, 0.5, 1, 2, 5], // Specify custom buckets for response time
+});
 
 type NotificationData = {
     token: string;
@@ -53,17 +58,27 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 app.use(authorizeApiAccess);
-app.use(responseTime((req: express.Request, res: express.Response, time: number) => {
-    // Increment the request counter
-    requestCounter.inc({ method:req.method,path:req.path, status: res.statusCode.toString()});
-    // Observe response time
-    responseTimeHistogram.observe({method:req.method,path:req.path},time / 1000); // Convert to seconds
- 
-  }));
+app.use(
+    responseTime(
+        (req: express.Request, res: express.Response, time: number) => {
+            // Increment the request counter
+            requestCounter.inc({
+                method: req.method,
+                path: req.path,
+                status: res.statusCode.toString(),
+            });
+            // Observe response time
+            responseTimeHistogram.observe(
+                { method: req.method, path: req.path },
+                time / 1000
+            ); // Convert to seconds
+        }
+    )
+);
 // app.use(router);
 // app.use(proxyRouter);
 
-collectDefaultMetrics()
+collectDefaultMetrics();
 
 const server = http.createServer(app);
 
@@ -73,11 +88,10 @@ const server = http.createServer(app);
 //     // console.log("Consumer Error from Server with Id",process.env.SERVER_ID,"=>",err)
 // })
 
-
-app.get('/metrics', async(req: express.Request, res: express.Response) => {
-    res.set('Content-Type', register.contentType);
+app.get("/metrics", async (req: express.Request, res: express.Response) => {
+    res.set("Content-Type", register.contentType);
     res.end(await register.metrics());
-  });
+});
 
 const socketIO = new Server(server, {
     cors: { origin: "*", methods: ["GET", "POST"] },
@@ -94,7 +108,7 @@ socketIO.on("connection", async (socket) => {
     let userId = socket.handshake.query.userId;
     let roomType = socket.handshake.query.roomType || "";
     // console.log({ roomId, roomType, userId });
-    
+
     if (roomId) {
         /// connect or join a room if users click on the chat button on the frontend///////////////
         socket.join(String(roomId));
@@ -118,11 +132,10 @@ socketIO.on("connection", async (socket) => {
                         },
                     }
                 );
-                socket
-                    .emit(
-                        `${userId}-pending`,
-                        JSON.stringify({ pending: true })
-                    );
+                socket.emit(
+                    `${userId}-pending`,
+                    JSON.stringify({ pending: true })
+                );
                 // console.log(`Updated ${updatedMessageRows} rows`);
             }
             let status = await Status.findOne({
@@ -170,11 +183,15 @@ socketIO.on("connection", async (socket) => {
         messageId: string;
         senderId: string;
         recipientId: string;
-        token?:string;
+        token?: string;
         image?: string;
         audio?: string;
         video?: string;
         text?: string;
+        link?:string;
+        replied?:boolean;
+        repliedRef?:string;
+        forwarded?:boolean;
         messageType: string;
         roomId: string;
         otherFile: string;
@@ -227,6 +244,10 @@ socketIO.on("connection", async (socket) => {
                 text: msgData?.text,
                 image: msgData?.image,
                 audio: msgData?.audio,
+                link:msgData?.link,
+                forwarded:msgData?.forwarded,
+                replied:msgData?.replied,
+                repliedRef:msgData?.repliedRef,
                 messageType: msgData.messageType,
                 video: msgData?.video,
                 otherFile: msgData?.otherFile,
@@ -242,7 +263,7 @@ socketIO.on("connection", async (socket) => {
             //         recipientReadStatus: true,
             //     });
             // }
-            let messageStatus
+            let messageStatus;
             let msgStatuses = [
                 {
                     userId: msgData.recipientId,
@@ -278,12 +299,15 @@ socketIO.on("connection", async (socket) => {
                 ];
                 messageStatus = await MessageStatus.bulkCreate(msgStatuses);
                 // console.log("Bulkcreated Message", messageStatus);
-                 }
-            const sender = await User.findOne({where:{userId:msgData.senderId},include:[
-                {
-                  model: Status
-                },
-              ]})
+            }
+            const sender = await User.findOne({
+                where: { userId: msgData.senderId },
+                include: [
+                    {
+                        model: Status,
+                    },
+                ],
+            });
 
             if (message && sender) {
                 const chatMessage: IMessage = {
@@ -296,57 +320,80 @@ socketIO.on("connection", async (socket) => {
                     .emit("msg", JSON.stringify(chatMessage));
                 // console.log("Message sent to room", msgData?.roomId);
 
-                let {count} = await MessageStatus.findAndCountAll({where:{roomId:msgData.roomId,userId:msgData.recipientId,read:false}})
-                
-                let recipient = await User.findOne({where:{userId:msgData.recipientId},include:[
-                    {
-                      model: Status
+                let { count } = await MessageStatus.findAndCountAll({
+                    where: {
+                        roomId: msgData.roomId,
+                        userId: msgData.recipientId,
+                        read: false,
                     },
-                  ]})
-              
-                let recipientReturnRoom:RoomReturnType = {
-                    roomId:msgData.roomId,
-                    recipientId:msgData.recipientId,
-                    senderId:msgData.senderId,
-                    recipientReadStatus:recipientActiveRoom === msgData.roomId,
-                    lastText:msgData.text || "",
-                    messageType:msgData.messageType,
-                    createdAt:message.getDataValue("createdAt"),
-                    updatedAt:message.getDataValue("updatedAt"),
-                    numberOfUnreadText:count
-                }
+                });
+
+                let recipient = await User.findOne({
+                    where: { userId: msgData.recipientId },
+                    include: [
+                        {
+                            model: Status,
+                        },
+                    ],
+                });
+
+                let recipientReturnRoom: RoomReturnType = {
+                    roomId: msgData.roomId,
+                    recipientId: msgData.recipientId,
+                    senderId: msgData.senderId,
+                    recipientReadStatus: recipientActiveRoom === msgData.roomId,
+                    lastText: msgData.text || "",
+                    messageType: msgData.messageType,
+                    createdAt: message.getDataValue("createdAt"),
+                    updatedAt: message.getDataValue("updatedAt"),
+                    numberOfUnreadText: count,
+                };
 
                 // console.log("Emmiting conversation for recipient",recipientReturnRoom)
                 socket.emit(
-                        `conversation-${msgData.recipientId}`,
-                        JSON.stringify({room:recipientReturnRoom,user:{...recipient?.dataValues,status:recipient?.getDataValue("Status")}})
-                    );
+                    `conversation-${msgData.recipientId}`,
+                    JSON.stringify({
+                        room: recipientReturnRoom,
+                        user: {
+                            ...sender?.dataValues,
+                            status: sender?.getDataValue("Status"),
+                            fullName: sender.getFullname(),
+                        },
+                    })
+                );
 
-                let senderReturnRoom:RoomReturnType = {
-                        roomId:msgData.roomId,
-                        recipientId:msgData.recipientId,
-                        senderId:msgData.senderId,
-                        recipientReadStatus:true,
-                        lastText:msgData.text || "",
-                        messageType:msgData.messageType,
-                        createdAt:message.getDataValue("createdAt"),
-                        updatedAt:message.getDataValue("updatedAt"),
-                        numberOfUnreadText:0
-                    }
-
-                
-                    // console.log("Emmiting conversation for sender",senderReturnRoom)
+                let senderReturnRoom: RoomReturnType = {
+                    roomId: msgData.roomId,
+                    recipientId: msgData.recipientId,
+                    senderId: msgData.senderId,
+                    recipientReadStatus: true,
+                    lastText: msgData.text || "",
+                    messageType: msgData.messageType,
+                    createdAt: message.getDataValue("createdAt"),
+                    updatedAt: message.getDataValue("updatedAt"),
+                    numberOfUnreadText: 0,
+                };
+                // console.log("Emmiting conversation for sender",senderReturnRoom)
                 socket.emit(
-                        `conversation-${msgData.senderId}`,
-                        JSON.stringify({room:senderReturnRoom,user:{...recipient?.dataValues,status:recipient?.getDataValue("Status")}})
-                    );
- 
+                    `conversation-${msgData.senderId}`,
+                    JSON.stringify({
+                        room: senderReturnRoom,
+                        user: {
+                            ...recipient?.dataValues,
+                            status: recipient?.getDataValue("Status"),
+                            fullName: recipient?.getFullname(),
+                        },
+                    })
+                );
+
                 let { data, status } = await axios.get(
                     `http://192.168.1.105:5000/notifications/token/${msgData.recipientId}`,
-                    {headers:{Authorization:`Bearer ${msgData?.token}`}}
+                    { headers: { Authorization: `Bearer ${msgData?.token}` } }
                 );
                 if (status === 200) {
-                    let notificationTokens:string[]  = [...new Set<string>(data.data)];
+                    let notificationTokens: string[] = [
+                        ...new Set<string>(data.data),
+                    ];
                     console.log({ notificationTokens });
                     let notificationMsgs: NotificationData[] = [];
                     for (let notificationToken of notificationTokens) {
@@ -355,7 +402,7 @@ socketIO.on("connection", async (socket) => {
                             title: sender?.getFullname() || "Message",
                             token: notificationToken,
                             data: {
-                                url: `com.fimiz.sl://chat/${msgData.senderId}/${msgData.roomId}`,
+                                url: `fimiz:///chat/${msgData.senderId}/${msgData.roomId}`,
                             },
                         };
                         notificationMsgs.push(notificationMsg);
@@ -415,17 +462,17 @@ socketIO.on("connection", async (socket) => {
         }
     });
 
-        /////////////////////// listening for delete message ///////////////////////////////////////
+    /////////////////////// listening for delete message ///////////////////////////////////////
 
     socket.on("delete", async (data: any) => {
-            try {
-                socket.broadcast
-                    .to(data.roomId)
-                    .emit("delete", JSON.stringify(data));
-            } catch (err) {
-                // console.log(err);
-            }
-        });
+        try {
+            socket.broadcast
+                .to(data.roomId)
+                .emit("delete", JSON.stringify(data));
+        } catch (err) {
+            // console.log(err);
+        }
+    });
 
     /////////////////////// update and check if a user is on a particular Room ////////////////
 

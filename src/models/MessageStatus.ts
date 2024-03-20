@@ -47,7 +47,7 @@ MessageStatus.init(
     {
         sequelize,
         modelName: "MessageStatus",
-        tableName:"MessageStatus"
+        tableName: "MessageStatus",
     }
 );
 

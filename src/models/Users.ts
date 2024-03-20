@@ -65,7 +65,7 @@ User.init(
         },
         verificationRank: {
             type: DataTypes.ENUM("low", "medium", "high"),
-            defaultValue:"low"
+            defaultValue: "low",
         },
         createdAt: {
             type: DataTypes.DATE,
@@ -84,6 +84,6 @@ User.init(
         updatedAt: "updatedAt",
     }
 );
-User.hasOne(Status, { foreignKey: "userId" }); 
+User.hasOne(Status, { foreignKey: "userId" });
 
 export default User;

@@ -55,8 +55,8 @@
 #                           echo "RUNNING DOCKER-COMPOSE"
 #                           sudo docker-compose up --build
 #                         fi
-#                       else 
-#                         echo "CURRENT DIRECTORY IS NOT HOME"  
+#                       else
+#                         echo "CURRENT DIRECTORY IS NOT HOME"
 #                         if test -d home;
 #                         then
 #                           echo "HOME DIR EXIST,CHANGING TO HOME DIR"

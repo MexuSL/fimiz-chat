@@ -1,14 +1,29 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
+var __importDefault =
+    (this && this.__importDefault) ||
+    function (mod) {
+        return mod && mod.__esModule ? mod : { default: mod };
+    };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateUser = exports.updateUserVerification = exports.deleteUser = exports.addUser = exports.responseStatus = exports.responseStatusCode = exports.getResponseBody = exports.hashData = exports.jwtDecode = exports.jwtEncode = void 0;
+exports.updateUser =
+    exports.updateUserVerification =
+    exports.deleteUser =
+    exports.addUser =
+    exports.responseStatus =
+    exports.responseStatusCode =
+    exports.getResponseBody =
+    exports.hashData =
+    exports.jwtDecode =
+    exports.jwtEncode =
+        void 0;
 const Users_1 = __importDefault(require("../models/Users"));
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 async function jwtEncode(data) {
-    let encodedData = jsonwebtoken_1.default.sign(data, process.env.APP_SECRET_KEY + "");
+    let encodedData = jsonwebtoken_1.default.sign(
+        data,
+        process.env.APP_SECRET_KEY + ""
+    );
     return encodedData;
 }
 exports.jwtEncode = jwtEncode;
@@ -61,8 +76,7 @@ async function addUser(data) {
             where: { email: personal?.email },
         });
         // console.log(process.env.SERVER_ID, "User created successfully.", savePersonalData);
-    }
-    catch (err) {
+    } catch (err) {
         throw err;
     }
 }
@@ -76,8 +90,7 @@ async function deleteUser(data) {
         if (deleteObj > 0) {
             // console.log(process.env.SERVER_ID, "User deleted successfully.");
         }
-    }
-    catch (err) {
+    } catch (err) {
         throw err;
     }
 }
@@ -89,16 +102,17 @@ async function updateUserVerification(data) {
             where: { userId },
         });
         if (personalInfo) {
-            let upatedResponse = await Users_1.default.update(verificationData, {
-                where: { userId },
-            });
+            let upatedResponse = await Users_1.default.update(
+                verificationData,
+                {
+                    where: { userId },
+                }
+            );
             // console.log(`Server with Id ${SERVER_ID} Row Affected:, ${upatedResponse[0]}`);
-        }
-        else {
+        } else {
             // console.log("User doesnot exist.");
         }
-    }
-    catch (err) {
+    } catch (err) {
         throw err;
     }
 }
@@ -114,23 +128,19 @@ async function updateUser(data) {
                 personalInfo?.set(key, await hashData(value));
                 let info = await personalInfo?.save();
                 // console.log(`Server with Id ${SERVER_ID} Row Affected:, ${info}`);
-            }
-            else if (key === "pinCode") {
+            } else if (key === "pinCode") {
                 personalInfo?.set(key, await hashData(value));
                 let info = await personalInfo?.save();
                 // console.log(`Server with Id ${SERVER_ID} Row Affected:, ${info}`);
-            }
-            else {
+            } else {
                 personalInfo?.set(key, value);
                 let info = await personalInfo?.save();
                 // console.log(`Server with Id ${SERVER_ID} Row Affected:, ${info}`);
             }
-        }
-        else {
+        } else {
             // console.log("User doesnot exist.");
         }
-    }
-    catch (err) {
+    } catch (err) {
         throw err;
     }
 }

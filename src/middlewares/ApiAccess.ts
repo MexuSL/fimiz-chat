@@ -9,11 +9,10 @@ export default async (
     let { authorization } = request.headers;
     let accessToken = authorization?.split(" ")[1];
 
-
-    let url   = request.url
-    if(url.includes("metrics")){
-        next()
-        return
+    let url = request.url;
+    if (url.includes("metrics")) {
+        next();
+        return;
     }
 
     if (accessToken) {
@@ -33,7 +32,7 @@ export default async (
         return;
     } else {
         return response.status(responseStatusCode.UNATHORIZED).json({
-            message:"Authorization token is required"
-        })
+            message: "Authorization token is required",
+        });
     }
 };

@@ -5,7 +5,7 @@ const expo_server_sdk_1 = require("expo-server-sdk");
 // optionally providing an access token if you have enabled push security
 let expo = new expo_server_sdk_1.Expo();
 class NotificationService {
-    constructor() { }
+    constructor() {}
     /**
      * sendNotification
      */
@@ -15,7 +15,9 @@ class NotificationService {
             // Each push token looks like ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]
             // Check that all your push tokens appear to be valid Expo push tokens
             if (!expo_server_sdk_1.Expo.isExpoPushToken(msg.token)) {
-                console.error(`Push token ${msg.token} is not a valid Expo push token`);
+                console.error(
+                    `Push token ${msg.token} is not a valid Expo push token`
+                );
                 continue;
             }
             // Construct a message (see https://docs.expo.io/push-notifications/sending-notifications/)
@@ -46,8 +48,7 @@ class NotificationService {
                 // must handle it appropriately. The error codes are listed in the Expo
                 // documentation:
                 // https://docs.expo.io/push-notifications/sending-notifications/#individual-errors
-            }
-            catch (error) {
+            } catch (error) {
                 console.error(error);
             }
         }

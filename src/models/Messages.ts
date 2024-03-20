@@ -38,6 +38,9 @@ Message.init(
         video: {
             type: DataTypes.STRING,
         },
+        link: {
+            type: DataTypes.TEXT,
+        },
         otherFile: {
             type: DataTypes.STRING,
         },
@@ -52,6 +55,15 @@ Message.init(
         },
         sent: {
             type: DataTypes.BOOLEAN,
+        },
+        forwarded: {
+            type: DataTypes.BOOLEAN,
+        },
+        replied: {
+            type: DataTypes.BOOLEAN,
+        },
+        repliedRef: {
+            type: DataTypes.UUID,
         },
         received: {
             type: DataTypes.BOOLEAN,

@@ -38,6 +38,9 @@ module.exports = {
             video: {
                 type: Sequelize.STRING,
             },
+            link: {
+                type: Sequelize.TEXT,
+            },
             otherFile: {
                 type: Sequelize.STRING,
             },
@@ -52,6 +55,15 @@ module.exports = {
             },
             sent: {
                 type: Sequelize.BOOLEAN,
+            },
+            forwarded: {
+                type: Sequelize.BOOLEAN,
+            },
+            replied: {
+                type: Sequelize.BOOLEAN,
+            },
+            repliedRef: {
+                type: Sequelize.UUID,
             },
             received: {
                 type: Sequelize.BOOLEAN,
