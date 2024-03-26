@@ -29,8 +29,8 @@ module.exports = {
             text: {
                 type: Sequelize.TEXT(60000),
             },
-            image: {
-                type: Sequelize.STRING,
+            images: {
+                type: Sequelize.JSON,
             },
             audio: {
                 type: Sequelize.STRING,

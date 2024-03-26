@@ -29,8 +29,8 @@ Message.init(
         text: {
             type: DataTypes.TEXT,
         },
-        image: {
-            type: DataTypes.STRING,
+        images: {
+            type: DataTypes.JSON,
         },
         audio: {
             type: DataTypes.STRING,
@@ -58,9 +58,11 @@ Message.init(
         },
         forwarded: {
             type: DataTypes.BOOLEAN,
+            defaultValue:false
         },
         replied: {
             type: DataTypes.BOOLEAN,
+            defaultValue:false
         },
         repliedRef: {
             type: DataTypes.UUID,

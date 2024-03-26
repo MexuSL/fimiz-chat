@@ -2,22 +2,26 @@
 
 echo "Setting up environment variables"
 
-export PORT=8080
-export MAIL_PORT=465
-export MAIL_HOST=smtp.mail.yahoo.com
-export MAIL_USER=mexu.sl@yahoo.com
-export MAIL_PASS=rdooytekacavmmnn
-export PG_DB_PASSWORD=Mexu2023
-export PG_DB_USERNAME=fimiz
-export PG_DB_HOST=fimiz-blog-db.ccn2o7dzia1z.us-east-1.rds.amazonaws.com
-export PG_DB_NAME=fimiz-blog-db
-# export API_ACCESS_KEY=mexu2023medishk2
-# export SMS_API_KEY=9d035dbc
-# export SMS_SECRET_KEY=fUr53lsNeWpUL1iV
-export ENV=production
+echo "export PORT=3000" >> ~/.bashrc
+echo "export MAIL_PORT=465" >> ~/.bashrc
+echo "export MAIL_HOST=smtp.mail.yahoo.com" >> ~/.bashrc
+echo "export MAIL_USER=mexu.sl@yahoo.com" >> ~/.bashrc
+echo "export MAIL_PASS=rdooytekacavmmnn" >> ~/.bashrc
+echo "export DB_PASSWORD=Mexu2023" >> ~/.bashrc
+echo "export DB_USERNAME=fimiz" >> ~/.bashrc
+echo "export DB_PORT=5432" >> ~/.bashrc
+echo "export DB_HOST=fimiz-blog-db.ccn2o7dzia1z.us-east-1.rds.amazonaws.com" >> ~/.bashrc
+echo "export DB_NAME=fimiz-blog-db" >> ~/.bashrc
+echo "export ENV=production" >> ~/.bashrc
+
+echo "# Sourcing environment variables" >> ~/.bashrc
+echo "source ~/.bash_custom" >> ~/.bashrc
 
 echo "Done setting up environment variables"
 
-echo "PORT :$PORT"
+# Create a custom script for sourcing environment variables
+echo "#!/bin/bash" > ~/.bash_custom
+echo "source ~/.bashrc" >> ~/.bash_custom
+chmod +x ~/.bash_custom
 
-
+echo "To apply the changes, restart your terminal or run 'source ~/.bashrc'"

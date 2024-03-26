@@ -7,6 +7,7 @@ import {
     IMessage,
     OnlineType,
     RecordingType,
+    RepliedMessage,
     RoomReturnType,
     TypingType,
 } from "../src/types/types";
@@ -184,7 +185,7 @@ socketIO.on("connection", async (socket) => {
         senderId: string;
         recipientId: string;
         token?: string;
-        image?: string;
+        images?: string[];
         audio?: string;
         video?: string;
         text?: string;
@@ -194,6 +195,7 @@ socketIO.on("connection", async (socket) => {
         forwarded?:boolean;
         messageType: string;
         roomId: string;
+        repliedMessageSenderName?:string;
         otherFile: string;
         received?: boolean;
         sent?: boolean;
@@ -242,7 +244,7 @@ socketIO.on("connection", async (socket) => {
                 senderId: msgData?.senderId,
                 recipientId: msgData?.recipientId,
                 text: msgData?.text,
-                image: msgData?.image,
+                images: msgData?.images,
                 audio: msgData?.audio,
                 link:msgData?.link,
                 forwarded:msgData?.forwarded,
@@ -314,10 +316,29 @@ socketIO.on("connection", async (socket) => {
                     ...message.dataValues,
                     user: sender.dataValues,
                 };
+                let repliedMessageToReturn:RepliedMessage | null = null;
+                if(msgData.replied){
+                    let repliedMessage = await Message.findOne({where:{messageId:msgData.repliedRef}})
+                     if(repliedMessage){
+                        let repliedMessageObject = repliedMessage.dataValues
+                        repliedMessageToReturn = {
+                            senderId: repliedMessageObject.senderId,
+                            messageId: repliedMessageObject.messageId,
+                            senderName: msgData.repliedMessageSenderName || "",
+                            text:repliedMessageObject.text,
+                            audio:repliedMessageObject.audio,
+                            image: repliedMessageObject.images?repliedMessageObject.images[0]:null,
+                            video: repliedMessageObject.video,
+                            link:repliedMessageObject.link,
+                            otherFile:repliedMessageObject.otherFile,
+                            messageType:repliedMessageObject.messageType
+                         };
+                     }
+                }
                 // console.log("Emitting message", chatMessage, msgData.roomId);
                 socketIO
                     .to(msgData?.roomId)
-                    .emit("msg", JSON.stringify(chatMessage));
+                    .emit("msg", JSON.stringify({...chatMessage,repliedMessage:repliedMessageToReturn}));
                 // console.log("Message sent to room", msgData?.roomId);
 
                 let { count } = await MessageStatus.findAndCountAll({

@@ -27,16 +27,39 @@ export type IMessage = {
     recipientId: string;
     text: string;
     user: User;
-    image?: string;
+    messageType: string;
+    images?: string[];
+    link?: string;
     video?: string;
     audio?: string;
     seen?: boolean;
     sent?: boolean;
     received?: boolean;
+    replied?: boolean;
+    forwarded?: boolean;
+    repliedRef?: string;
     pending?: boolean;
     createdAt: Date;
     updatedAt: Date;
-};
+    repliedMessage?: RepliedMessage;
+ };
+
+// export type IMessage = {
+//     messageId: string;
+//     senderId: string;
+//     recipientId: string;
+//     text: string;
+//     user: User;
+//     image?: string;
+//     video?: string;
+//     audio?: string;
+//     seen?: boolean;
+//     sent?: boolean;
+//     received?: boolean;
+//     pending?: boolean;
+//     createdAt: Date;
+//     updatedAt: Date;
+// };
 
 export type ChatReturnType = {
     messageId: number;
@@ -90,4 +113,17 @@ export type RoomReturnType = {
     updatedAt: Date;
 };
 
+
+export type RepliedMessage = {
+    senderId: string;
+    messageId: string;
+    senderName: string;
+    text?: string;
+    audio?: string;
+    image?: string;
+    video?: string;
+    link?: string;
+    otherFile?: string;
+    messageType: string;
+ };
 
